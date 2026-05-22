@@ -147,7 +147,21 @@ between `yotta-infra` and `yotta-gitops`.
 Otherwise act; keep the active plan current; note anything
 non-trivial in the PR description.
 
-## 11. Common commands
+## 11. Commit messages
+
+Subject is prefixed with **`msalfran/<type>: <message>`** —
+`@msalfran` is the current primary engineer on the alwaysbespoke
+(ab-*) repos. Examples:
+
+- `msalfran/feat: scaffold ab-infra (CDK + Terraform + CI)`
+- `msalfran/fix: bootstrap-tf needs -auto-approve for unattended runs`
+- `msalfran/docs: add handoff contract for child repos`
+
+The prefix is **per-commit attribution, not a per-repo lockdown**.
+When more engineers contribute, ask which engineer is the primary
+author before composing the commit.
+
+## 12. Common commands
 
 > Filled in as the Makefile lands. See the active plan in
 > `docs/plans/` for the canonical commands of the day.

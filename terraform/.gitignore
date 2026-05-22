@@ -1,0 +1,15 @@
+.terraform/
+# .terraform.lock.hcl is intentionally NOT ignored — committing it
+# pins the provider versions so every operator and CI gets the same
+# resolution. (HashiCorp's recommended practice.)
+terraform.tfstate
+terraform.tfstate.backup
+crash.log
+crash.*.log
+*.tfvars.local
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

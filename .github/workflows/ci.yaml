@@ -1,0 +1,163 @@
+# CI for ab-infra.
+#
+# Same posture as yotta-infra's CI:
+#   - jest tests (no AWS)
+#   - cdk synth per (env, region) (no AWS)
+#   - cdk diff on PRs (assumes the ab-infra-ci-read role via OIDC)
+#   - terraform fmt + validate + native test (no AWS)
+#
+# GitHub OIDC → IAM role; no static AWS credentials anywhere.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  TERRAFORM_VERSION: '1.6.6'
+
+jobs:
+  cdk-test:
+    name: cdk · test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  cdk-synth:
+    name: cdk · synth · ${{ matrix.env }}/${{ matrix.region }}
+    runs-on: ubuntu-latest
+    needs: cdk-test
+    defaults:
+      run:
+        working-directory: cdk
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: shared
+            region: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+      - run: npm ci
+      - run: npx cdk synth --context env=${{ matrix.env }} --context region=${{ matrix.region }}
+
+  cdk-diff:
+    name: cdk · diff · ${{ matrix.env }}/${{ matrix.region }}
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: cdk-synth
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: cdk
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: shared
+            region: us-east-1
+            role-to-assume: arn:aws:iam::768507067298:role/ab-infra-ci-read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ matrix.role-to-assume }}
+          aws-region: ${{ matrix.region }}
+          role-session-name: gh-actions-ab-infra-pr-${{ github.event.pull_request.number }}
+      - run: npm ci
+      - name: cdk diff
+        id: diff
+        run: |
+          set -o pipefail
+          npx cdk diff \
+            --context env=${{ matrix.env }} \
+            --context region=${{ matrix.region }} \
+            2>&1 | tee diff.txt || true
+      - name: Comment diff on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('cdk/diff.txt', 'utf8');
+            const trimmed = body.length > 60000
+              ? body.slice(0, 60000) + '\n\n…truncated, see job logs for the rest.'
+              : body;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: [
+                `### \`cdk diff\` · ${{ matrix.env }} / ${{ matrix.region }}`,
+                '',
+                '```',
+                trimmed,
+                '```',
+              ].join('\n'),
+            });
+
+  terraform-checks:
+    name: terraform · fmt/validate/test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt -check -recursive
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: validate · bootstrap
+        run: |
+          terraform -chdir=terraform/bootstrap init -backend=false
+          terraform -chdir=terraform/bootstrap validate
+
+      - name: validate · envs/shared-use1
+        run: |
+          terraform -chdir=terraform/envs/shared-use1 init -backend=false
+          terraform -chdir=terraform/envs/shared-use1 validate
+
+      - name: terraform test · modules/tags
+        run: |
+          terraform -chdir=terraform/modules/tags init
+          terraform -chdir=terraform/modules/tags test
+
+      - name: terraform test · bootstrap
+        run: |
+          terraform -chdir=terraform/bootstrap init
+          terraform -chdir=terraform/bootstrap test
