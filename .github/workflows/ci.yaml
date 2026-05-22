@@ -35,7 +35,7 @@ jobs:
       run:
         working-directory: cdk
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -58,7 +58,7 @@ jobs:
           - env: shared
             region: us-east-1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -87,7 +87,7 @@ jobs:
             region: us-east-1
             role-to-assume: arn:aws:iam::768507067298:role/ab-infra-ci-read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -133,7 +133,7 @@ jobs:
     name: terraform · fmt/validate/test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
