@@ -28,7 +28,7 @@ that owns the cross-account glue.
 .
 ├── cdk/         # AWS resources (TypeScript CDK app)
 ├── terraform/   # Non-AWS resources + remote state backend
-├── docs/
+├── documentation/
 │   └── plans/   # Multi-step implementation plans
 ├── AGENTS.md
 ├── Makefile
@@ -36,7 +36,7 @@ that owns the cross-account glue.
 ```
 
 `cdk/` and `terraform/` are scaffolded as their bootstrap plans
-execute — see `docs/plans/` for the live set.
+execute — see `documentation/plans/` for the live set.
 
 ## AWS accounts in scope
 
@@ -93,7 +93,7 @@ CloudFormation export name** so the consuming repo can pull it via
 ab-shared-use1-<purpose>-<resource>
 ```
 
-A handoff doc (`docs/handoff/`) lists every export and its consumer.
+A handoff doc (`documentation/handoff/`) lists every export and its consumer.
 
 Breaking changes to an export (renames, scope changes) are
 two-PR: add the new export alongside the old, switch consumers,

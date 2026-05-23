@@ -5,6 +5,12 @@ Operational guide for anyone — human or AI — making changes in
 
 The format follows the [`AGENTS.md`](https://agents.md/) convention.
 
+> **⚠️ Cross-repo work?** If your change also requires changes in
+> `ab-web` (website code, deploy pipeline), stop and start from
+> [`ab-cross-repo`](https://github.com/alwaysbespoke/ab-cross-repo).
+> That repo has the cross-repo plans and coordinates the order of
+> work across repos.
+
 ---
 
 ## 1. What this repo is
@@ -57,7 +63,7 @@ Held to the same principal-engineer-level bar as `yotta-infra`.
   Flag anything irreversible (zone names, role ARNs that downstream
   consumers depend on).
 
-## 5. Plans (`docs/plans/`)
+## 5. Plans (`documentation/plans/`)
 
 Same format and rules as `yotta-infra`:
 
@@ -122,9 +128,9 @@ ACM certificate ARN), the workflow is:
 
 ```
 1. ab-infra PR creates/updates the resource and exports its ARN under
-   a stable CloudFormation Export.Name. Updates docs/handoff/.
+   a stable CloudFormation Export.Name. Updates documentation/handoff/.
 2. Child repo PR (e.g. yotta-infra) references the export from
-   docs/handoff/ when wiring its IRSA role / IAM policy.
+   documentation/handoff/ when wiring its IRSA role / IAM policy.
 3. Both PRs merge; the child repo deploys against the new export.
 ```
 
@@ -164,7 +170,7 @@ author before composing the commit.
 ## 12. Common commands
 
 > Filled in as the Makefile lands. See the active plan in
-> `docs/plans/` for the canonical commands of the day.
+> `documentation/plans/` for the canonical commands of the day.
 
 Planned set (matches `yotta-infra`'s):
 

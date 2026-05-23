@@ -12,6 +12,7 @@ import {
   loadEnvironment,
   readContextEnvAndRegion,
 } from '../config/environments';
+import { AlwaysBespokeWebStack } from '../lib/alwaysbespoke-web-stack';
 import { CiOidcStack } from '../lib/ci-oidc-stack';
 import { CrossAccountDnsStack } from '../lib/cross-account-dns-stack';
 import { applyStandardTags } from '../lib/tagging';
@@ -42,6 +43,12 @@ new CrossAccountDnsStack(app, `${stackBase}-CrossAccountDns`, {
   env: { account: config.account, region: config.region },
   config,
   description: `Cross-account IAM roles allowing child-brand clusters to write records in zones hosted in this account.`,
+});
+
+new AlwaysBespokeWebStack(app, `${stackBase}-Web`, {
+  env: { account: config.account, region: config.region },
+  config,
+  description: 'S3 + CloudFront static site for alwaysbespoke.com.',
 });
 
 app.synth();

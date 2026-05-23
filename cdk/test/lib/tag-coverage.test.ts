@@ -7,6 +7,7 @@
 import * as cdk from 'aws-cdk-lib';
 
 import { loadEnvironment } from '../../config/environments';
+import { AlwaysBespokeWebStack } from '../../lib/alwaysbespoke-web-stack';
 import { CiOidcStack } from '../../lib/ci-oidc-stack';
 import { CrossAccountDnsStack } from '../../lib/cross-account-dns-stack';
 import { STANDARD_TAG_KEYS, applyStandardTags } from '../../lib/tagging';
@@ -52,6 +53,10 @@ function synthAllStacks(env: string, region: string): cdk.cx_api.CloudAssembly {
     githubRepo: cfg.githubRepo,
   });
   new CrossAccountDnsStack(app, 'Ab-Shared-Use1-CrossAccountDns', {
+    env: { account: cfg.account, region: cfg.region },
+    config: cfg,
+  });
+  new AlwaysBespokeWebStack(app, 'Ab-Shared-Use1-Web', {
     env: { account: cfg.account, region: cfg.region },
     config: cfg,
   });
